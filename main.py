@@ -43,7 +43,10 @@ class Crawler(Thread):
                 res = self.scrap()
                 result: str = "".join(str(element) for element in res)
             except:
+                print("Error while requesting website content.")
+                time.sleep(5)
                 result: str = ""
+                continue
 
             if self.current_content != "first":
                 print(f"{self.url} - Checking for changes...")
@@ -63,7 +66,11 @@ class Crawler(Thread):
             self.sleep()
 
     def scrap(self) ->  (Tag | NavigableString | None):
+        
         content = requests.get(self.url, verify=False)
+
+        content.raise_for_status()
+
         soup = BeautifulSoup(content.text, features="html.parser")
 
         if class_or_id=="class":
