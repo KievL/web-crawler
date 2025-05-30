@@ -2,6 +2,7 @@ import time
 import smtplib
 import environ
 import requests
+import logging
 
 from dotenv import load_dotenv
 
@@ -10,7 +11,14 @@ from bs4 import BeautifulSoup, Tag, NavigableString
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-from typing import List, Tuple, Any
+from typing import List, Tuple
+
+logging.basicConfig(
+    format="{asctime} - {levelname} - {message}",
+    style="{",
+    datefmt= "%d/%m/%Y %H:%M:%S",
+    level=logging.INFO
+)
 
 load_dotenv()
 
@@ -38,36 +46,36 @@ class Crawler(Thread):
     
     def run(self):
         while True:
-            print(f"{self.url} - Scraping...")
+            logging.info("%s - Scraping...", self.url)
             try:
                 res = self.scrap()
                 result: str = "".join(str(element) for element in res)
             except:
-                print("Error while requesting website content.")
+                logging.exception("%s - Error while requesting website content.", self.url)
                 time.sleep(5)
                 result: str = ""
                 continue
 
             if self.current_content != "first":
-                print(f"{self.url} - Checking for changes...")
+                logging.info("%s - Checking for changes...", self.url)
                 changed: bool = self.has_chaged(result=result)
-
+                
                 if changed:
-                    print(f"{self.url} - Changes found!")
-                    print(f"{self.url} - Sending emails...")
+                    logging.info("%s - Changes found!", self.url)
+                    logging.info("%s - Sending emails...", self.url)
                     sent = self.send_email(result)
 
                     if sent:
-                        print(f"{self.url} - Emails sent.")
+                        logging.info("%s - Emails sent.", self.url)
                         self.found=True
                 else:
-                    print(f"{self.url} - No changes detected.")
+                    logging.info("%s - No changes detected.", self.url)
             self.current_content = result
             self.sleep()
 
     def scrap(self) ->  (Tag | NavigableString | None):
         
-        content = requests.get(self.url, verify=False)
+        content = requests.get(self.url, verify=False, timeout=60)
 
         content.raise_for_status()
 
@@ -95,8 +103,8 @@ class Crawler(Thread):
                 server.login(email, password)
                 server.sendmail(email, emails_to.split(","), msg.as_string())
             return True
-        except Exception as e:
-            print(f"{self.url} - Error: {e}")
+        except:
+            logging.exception("%s - Error while sending email", self.url)
             return False
     
     def get_message(self, result: str) -> str:
@@ -104,13 +112,13 @@ class Crawler(Thread):
     
     def sleep(self) -> None:
         if self.found:
-            print(f"{self.url} - Sleeping for {sleep_time_after_detection} seconds...")
+            logging.info("%s - Sleeping for %d seconds...", self.url, sleep_time_after_detection)
             time.sleep(sleep_time_after_detection)
             self.current_content="first"
             self.found=False
 
         else:
-            print(f"{self.url} - Sleeping for {sleep_time} seconds...")
+            logging.info("%s - Sleeping for %d seconds...", self.url, sleep_time)
             time.sleep(sleep_time)
 
     def get_config(self) -> Tuple[str, str]:
