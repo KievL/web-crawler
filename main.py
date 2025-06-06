@@ -13,6 +13,11 @@ from email.mime.multipart import MIMEMultipart
 
 from typing import List, Tuple
 
+from threading import Thread
+
+from google import genai
+
+
 logging.basicConfig(
     format="{asctime} - {levelname} - {message}",
     style="{",
@@ -32,8 +37,10 @@ target_strings: List[str] = env.get_value("TARGET_STRINGS").split(",")
 sleep_time: int = env.get_value("SLEEP_TIME", int) 
 sleep_time_after_detection: int = env.get_value("SLEEP_TIME_AFTER_DETECTION", int)
 class_or_id = env.get_value("CLASS_OR_ID")
+gemini_key = env.get_value("GEMINI_KEY")
+ai_prompt = env.get_value("AI_PROMPT")
 
-from threading import Thread
+client = genai.Client(api_key=gemini_key)
 
 class Crawler(Thread):
 
@@ -108,7 +115,12 @@ class Crawler(Thread):
             return False
     
     def get_message(self, result: str) -> str:
-        return f"The following update was detected on the website {self.url}: \n Old: \n {self.current_content} \n New: \n {result}."
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=ai_prompt+ f"Old: {self.current_content}, New: {result}",
+        )
+        
+        return response.text
     
     def sleep(self) -> None:
         if self.found:
