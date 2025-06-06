@@ -7,6 +7,7 @@ A multithreaded Python web crawler that monitors websites for updates in specifi
 - Continuous monitoring of multiple websites
 - Detects changes in HTML content based on `class` or `id`
 - Sends automated email alerts when updates are found
+- Summarizes detected changes using Google Gemini (AI integration)
 - Supports multiple recipients
 - Environment-based configuration
 
@@ -30,6 +31,8 @@ TARGET_STRINGS=target1,target2
 SLEEP_TIME=60
 SLEEP_TIME_AFTER_DETECTION=1800
 CLASS_OR_ID=class
+GEMINI_KEY=your_gemini_api_key
+AI_PROMPT=Summarize the following website content update...
 ```
 
 - `WEBSITE_URLS`: List of websites to monitor (comma-separated)
@@ -47,6 +50,11 @@ CLASS_OR_ID=class
 - `EMAILS_TO`: Comma-separated list of email recipients
 
 - `PASSWORD`: Your email password (preferably an App Password if using Gmail)
+
+- `GEMINI_KEY`: Your Gemini API key.
+
+- `AI_PROMPT`: Prompt that will be sent to the IA model to make the summary. This prompt will be concatenated with the old and new target HTML contents.
+
 
 ### 3. Install dependencies
 
